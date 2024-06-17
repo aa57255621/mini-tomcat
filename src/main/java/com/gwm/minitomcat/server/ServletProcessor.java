@@ -1,6 +1,7 @@
 package com.gwm.minitomcat.server;
 
 import javax.servlet.Servlet;
+import javax.servlet.http.HttpServlet;
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -44,7 +45,7 @@ public class ServletProcessor {
 
         Servlet servlet = null;
         try {
-            servlet = (Servlet) servletClass.newInstance();
+            servlet = (HttpServlet) servletClass.newInstance();
             HttpRequestFacade requestFacade = new HttpRequestFacade(request);
             HttpResponseFacade responseFacade = new HttpResponseFacade(response);
             servlet.service(requestFacade, responseFacade);
