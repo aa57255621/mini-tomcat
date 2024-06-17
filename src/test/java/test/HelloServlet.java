@@ -22,10 +22,6 @@ public class HelloServlet implements Servlet{
         res.getWriter().println(doc);
     }
 
-    public static void main(String[] args) {
-
-    }
-
     @Override
     public void destroy() {
     }
@@ -42,5 +38,9 @@ public class HelloServlet implements Servlet{
 
     @Override
     public void init(ServletConfig arg0) throws ServletException {
+    }
+
+    public static void main(String[] args) {
+
     }
 }

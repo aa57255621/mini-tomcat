@@ -1,30 +1,17 @@
 package com.gwm.minitomcat.server;
 
-
-import org.apache.commons.lang3.text.StrSubstitutor;
-
 import javax.servlet.Servlet;
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLStreamHandler;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ServletProcessor {
-    private static String OKMessage = "HTTP/1.1 ${StatusCode} ${StatusName}\r\n"+
-            "Content-Type: ${ContentType}\r\n"+
-            "Server: minit\r\n"+
-            "Date: ${ZonedDateTime}\r\n"+
-            "\r\n";
 
-    public void process(Request request, Response response) {
+    public void process(HttpRequest request, HttpResponse response) {
         String uri = request.getUri();
         String servletName = uri.substring(uri.lastIndexOf("/") + 1);
         URLClassLoader loader = null;
-        PrintWriter writer = null;
 
         try {
             // create a URLClassLoader
@@ -39,12 +26,8 @@ public class ServletProcessor {
             System.out.println(e.toString() );
         }
 
-        try {
-            response.setCharacterEncoding("UTF-8");
-            writer = response.getWriter();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
+        response.setCharacterEncoding("UTF-8");
+
         Class<?> servletClass = null;
         try {
             servletClass = loader.loadClass(servletName);
@@ -53,13 +36,18 @@ public class ServletProcessor {
             System.out.println(e.toString());
         }
 
-        String head = composeResponseHead();
-        writer.println(head);
+        try {
+            response.sendHeaders();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
 
         Servlet servlet = null;
         try {
             servlet = (Servlet) servletClass.newInstance();
-            servlet.service(request, response);
+            HttpRequestFacade requestFacade = new HttpRequestFacade(request);
+            HttpResponseFacade responseFacade = new HttpResponseFacade(response);
+            servlet.service(requestFacade, responseFacade);
         }
         catch (Exception e) {
             System.out.println(e.toString());
@@ -67,17 +55,6 @@ public class ServletProcessor {
         catch (Throwable e) {
             System.out.println(e.toString());
         }
-
-    }
-    private String composeResponseHead() {
-        Map<String,Object> valuesMap = new HashMap<>();
-        valuesMap.put("StatusCode","200");
-        valuesMap.put("StatusName","OK");
-        valuesMap.put("ContentType","text/html;charset=UTF-8");
-        valuesMap.put("ZonedDateTime", DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now()));
-        StrSubstitutor sub = new StrSubstitutor(valuesMap);
-        String responseHead = sub.replace(OKMessage);
-        return responseHead;
     }
 
 }
